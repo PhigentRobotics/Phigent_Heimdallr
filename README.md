@@ -6,11 +6,6 @@
 **NOTE 2**: Building Kria SOM Vitis platforms from source requires at least 30G of memory <ins>including RAM and Swap</ins>. Make sure you extend your swap beforehand if necessary.
 
 
-This repo contains submodules. To clone this repo, run:
-```
-git clone --recursive https://github.com/Xilinx/kv260-vitis.git
-```
-
 # Contents
 
 This reference design contains the following:
