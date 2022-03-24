@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root versionMajor="1" versionMinor="6">
+  <kernel name="Corr" language="ip" vlnv="phigent.ai:RTLKernel:Corr:1.0" attributes="" preferredWorkGroupSizeMultiple="0" workGroupSize="1" debug="true" compileOptions=" -g" profileType="none">
+    <ports>
+      <port name="S_AXI_CONTROL"   mode="slave" range="0x00004000" dataWidth="32" portType="addressable" base="0x0"/>
+      <port name="M0_L_IMG_AXI"    mode="master" range="0xFFFFFFFF" dataWidth="128" portType="addressable" base="0x0"/>
+      <port name="M0_R_IMG_AXI"    mode="master" range="0xFFFFFFFF" dataWidth="128" portType="addressable" base="0x0"/>
+    </ports>
+    <args>
+      <arg name="addr_l_img"  addressQualifier="0" id="0"  port="S_AXI_CONTROL"  size="0x8" offset="0x030" type="uint" hostOffset="0x0" hostSize="0x8"/> 
+      <arg name="addr_r_img"  addressQualifier="0" id="1"  port="S_AXI_CONTROL"  size="0x8" offset="0x038" type="uint" hostOffset="0x0" hostSize="0x8"/> 
+      <arg name="addr_o_img"  addressQualifier="1" id="2"  port="M0_L_IMG_AXI"   size="0x8" offset="0x040" type="uint" hostOffset="0x0" hostSize="0x8"/> 
+      <arg name="addr_pe_shf" addressQualifier="1" id="3"  port="M0_R_IMG_AXI"   size="0x8" offset="0x048" type="uint" hostOffset="0x0" hostSize="0x8"/> 
+
+    </args>
+  </kernel>
+</root>
+

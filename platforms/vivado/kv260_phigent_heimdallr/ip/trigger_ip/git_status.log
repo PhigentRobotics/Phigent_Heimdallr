@@ -1,0 +1,228 @@
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   rtl/reg_map.sv
+	modified:   rtl/trigger_top.sv
+	modified:   rtl/trigger_wrapper.sv
+	modified:   sys/build_ip.tcl
+	modified:   testbench/trigger_sim.sv
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	vivado.jou
+	vivado.log
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+--------
+
+diff --git a/rtl/reg_map.sv b/rtl/reg_map.sv
+index 29d677f..b860642 100644
+--- a/rtl/reg_map.sv
++++ b/rtl/reg_map.sv
+@@ -18,6 +18,7 @@ module reg_map #(
+   //--------- reg for sys ctrl -------------------------//
+   output                         trigger_start   ,
+   output reg                     trigger_reset=0 ,
++  input   [AXIL_DATA_W-1:0]      reg_clk_cnt     ,
+   // AXI Lite 
+   AXI_L_Inf.slave                AXI_Lite
+ );
+@@ -96,6 +97,7 @@ localparam
+     ADDR_ISR             = 12'h0c,
+ 	
+ 	ADDR_FRQ             = 12'h10,
++	ADDR_CLK_CNT         = 12'h14,
+ 	
+     WRIDLE               = 2'd0,
+     WRDATA               = 2'd1,
+@@ -247,6 +249,8 @@ always @(posedge clk) begin
+                 ADDR_GIE        :     rdata <= int_gie;   
+                 ADDR_IER        :     rdata <= int_ier;
+                 ADDR_ISR        :     rdata <= int_isr; 
++				
++				ADDR_CLK_CNT    :     rdata <= reg_clk_cnt;
+ 
+                 default         :     rdata <= 32'h0;                
+             endcase
+diff --git a/rtl/trigger_top.sv b/rtl/trigger_top.sv
+index 604e949..56fa288 100644
+--- a/rtl/trigger_top.sv
++++ b/rtl/trigger_top.sv
+@@ -7,6 +7,7 @@
+ // Description: 
+ 
+ module trigger_top #(
++  parameter CLKIN_FREQ     = 100000000,
+   parameter TRIGGER_FREQ   = 30,
+   parameter AXI_ADDR_W     = 32,
+   parameter AXIL_ADDR_W    = 12, //axi lite address space : 4MB
+@@ -20,13 +21,16 @@ module trigger_top #(
+   AXI_L_Inf.slave                  AXI_Lite         //AXI lite intf for fetching config register from DDR
+ );
+ 
+-localparam CLKIN_FREQ     = 100000000; //100MHz
++// localparam CLKIN_FREQ     = 100000000; //100MHz
+ localparam FREQ_CNT       = CLKIN_FREQ/TRIGGER_FREQ;
+ localparam FREQ_CNT_BW    = $clog2(FREQ_CNT-1) + 1;
++localparam HIGH_CLK_N     = FREQ_CNT/2;
+ 
+ wire                    trigger_start;
+ wire                    trigger_reset;
+ reg  [FREQ_CNT_BW -1:0] clk_cnt=0    ;
++// for debug
++wire [AXIL_DATA_W -1:0] reg_clk_cnt = clk_cnt;
+ 
+ reg_map #(
+   .AXI_ADDR_W        (AXI_ADDR_W       ),
+@@ -39,6 +43,7 @@ reg_map(
+   .rst               (rst              ),
+   .trigger_start     (trigger_start    ),
+   .trigger_reset     (trigger_reset    ),
++  .reg_clk_cnt       (reg_clk_cnt      ),
+   .AXI_Lite          (AXI_Lite         )
+ );
+ 
+@@ -55,7 +60,7 @@ always @ (posedge clk)begin
+   if(trigger_reset)
+     trigger  <= 'h0;
+   else if(trigger_start)
+-    trigger  <= clk_cnt == FREQ_CNT-1;
++    trigger  <= (clk_cnt < HIGH_CLK_N-1);
+   else
+     trigger  <= 'h0;
+ end
+diff --git a/rtl/trigger_wrapper.sv b/rtl/trigger_wrapper.sv
+index c172888..b3fbdbe 100644
+--- a/rtl/trigger_wrapper.sv
++++ b/rtl/trigger_wrapper.sv
+@@ -8,6 +8,7 @@
+ //=========================
+ 
+ module trigger_wrapper#(
++  parameter CLKIN_FREQ     = 100000000,
+   parameter TRIGGER_FREQ   = 30,
+   parameter AXI_ADDR_W     = 32,
+   parameter AXIL_ADDR_W    = 12, //axi lite address space : 4MB
+@@ -84,6 +85,7 @@ assign  s_axi_control_rvalid   = AXI_Lite.rvalid     ;
+ 
+ 
+ trigger_top#(
++  .CLKIN_FREQ      (CLKIN_FREQ   ),
+   .TRIGGER_FREQ    (TRIGGER_FREQ ),
+   .AXI_ADDR_W      (AXI_ADDR_W   ),
+   .AXIL_ADDR_W     (AXIL_ADDR_W  ), //axi lite address space : 4MB
+diff --git a/sys/build_ip.tcl b/sys/build_ip.tcl
+index ea7f47c..7032f89 100644
+--- a/sys/build_ip.tcl
++++ b/sys/build_ip.tcl
+@@ -59,7 +59,7 @@ if { [bip_param es] } {
+   enable_beta_device
+ }
+ # build project
+-create_project corr_accel_ip [bip_dir trigger_ip]/prj/ -part [bip_param part] -force
++create_project trigger_ip [bip_dir trigger_ip]/prj/ -part [bip_param part] -force
+ set_property board_part xilinx.com:kv260:part0:1.1 [current_project]
+ set_msg_config -id "IP_Flow 19-5107" -suppress
+ set_msg_config -id "IP_Flow 19-3158" -suppress
+@@ -72,7 +72,6 @@ set_property top [bip_param ip_name] [current_fileset]
+ # set_property PROCESSING_ORDER LATE   [get_files [bip_dir release]/ttcl/*_clocks_xdc.ttcl]
+ # set_property used_in_synthesis 0     [get_files [bip_dir release]/ttcl/*_impl*_xdc.ttcl]
+ update_ip_catalog
+-set_property top structured_wrapper [current_fileset]
+ # if { [bip_param coremode] == {xci} } {
+   # upgrade_ip [get_ips]
+ # }
+@@ -118,6 +117,15 @@ foreach i [filter [bip_get_bus_interfaces * ] {BUS_TYPE_NAME =~ *axi*}] {
+ ipgui::remove_page -component [ipx::current_core] [bip_pagespec "Page 0"]
+ 
+ dict set dict_ip page_arch {Arch} params [dict create \
++                      CLKIN_FREQ       [dict create                                    \
++                                        display_name                    {The frequency of trigger signal}\
++                                        widget                          {textEdit}      \
++                                        value_validation_type           {range_long}    \
++                                        value_format                    {long}          \
++                                        value_validation_range_minimum  {100}           \
++                                        value_validation_range_maximum  {300000000}     \
++                                        value                           {100000000}     \
++                                        ]                                               \
+                       TRIGGER_FREQ       [dict create                                    \
+                                         display_name                    {The frequency of trigger signal}\
+                                         widget                          {textEdit}      \
+diff --git a/testbench/trigger_sim.sv b/testbench/trigger_sim.sv
+index 35c3d3c..9e84d9a 100644
+--- a/testbench/trigger_sim.sv
++++ b/testbench/trigger_sim.sv
+@@ -8,12 +8,13 @@
+ 
+ module trigger_sim;
+ 
+-localparam TRIGGER_FREQ   = 20000;
++localparam TRIGGER_FREQ   = 30;
+ localparam AXI_ADDR_W     = 32;
+ localparam AXIL_ADDR_W    = 12; //axi lite address space : 4MB
+ localparam AXIL_DATA_W    = 32; //the unit size of axi-lite
++localparam CLKIN_FREQ     = 100000000;
+ 
+-parameter CLK_PERIOD    = 4;
++parameter CLK_PERIOD    = 10;
+ 
+ logic [AXIL_ADDR_W      -1:0] s_axi_control_awaddr ;
+ logic [2                  :0] s_axi_control_awprot ;
+@@ -33,7 +34,7 @@ logic                         s_axi_control_arready;
+ logic [AXIL_DATA_W      -1:0] s_axi_control_rdata  ;
+ logic [1                  :0] s_axi_control_rresp  ;
+ logic                         s_axi_control_rvalid ;
+-logic                         s_axi_control_rready ;
++logic                         s_axi_control_rready =1'b1;
+ 
+ AXI_L_Inf          AXI_Lite();
+ 
+@@ -77,7 +78,7 @@ always @ (posedge clk)begin
+ end
+ 
+ always @ (posedge clk)begin
+-  if(clk_cnt == 100)begin
++  if(clk_cnt == 200)begin
+     s_axi_control_awaddr  <= 'h0;
+ 	s_axi_control_awvalid <= 1'b1;
+   end
+@@ -88,7 +89,12 @@ always @ (posedge clk)begin
+ end
+ 
+ always @ (posedge clk)begin
+-  if(s_axi_control_wready)begin
++  if(rst)begin
++    s_axi_control_wdata   <= 'h0;
++	s_axi_control_wstrb   <= 'h0;
++	s_axi_control_wvalid  <= 'h0;
++  end
++  else if(clk_cnt == 202)begin
+     s_axi_control_wdata   <= 32'h1;
+ 	s_axi_control_wstrb   <= 4'b1111;
+ 	s_axi_control_wvalid  <= 1'b1;
+@@ -99,9 +105,21 @@ always @ (posedge clk)begin
+ 	s_axi_control_wvalid  <= 'h0;
+   end
+ end
++
++always @ (posedge clk)begin
++  if(clk_cnt == 40000)begin
++    s_axi_control_araddr  <= 12'h14;
++	s_axi_control_arvalid <= 1'b1;
++  end
++  else begin
++    s_axi_control_araddr  <= 'h0;
++	s_axi_control_arvalid <= 'h0;
++  end
++end
+ 	
+ 
+ trigger_top#(
++  .CLKIN_FREQ      (CLKIN_FREQ   ),
+   .TRIGGER_FREQ    (TRIGGER_FREQ ),
+   .AXI_ADDR_W      (AXI_ADDR_W   ),
+   .AXIL_ADDR_W     (AXIL_ADDR_W  ), //axi lite address space : 4MB
