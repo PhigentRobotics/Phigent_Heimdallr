@@ -6,4 +6,3 @@
 `define def_DP           40     //the calculation parallelism of disparity dimension
 `define def_IC           32     //the input channel number
 `define def_ID_BW        4      //the data width of AXI_ID
-`define def_TIMER_CNT    450000      //the timer count number of locking system. O means nolock. The value is dived by 1000000
