@@ -1,6 +1,4 @@
-# (C) Copyright 2020 - 2021 Xilinx, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
+# (C) Copyright 2022 - 2022 Phigent, Inc.
 
 #Set Board Preset 
 set_param board.repoPaths {../board_files} 

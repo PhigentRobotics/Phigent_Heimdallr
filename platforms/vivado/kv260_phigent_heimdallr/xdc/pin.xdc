@@ -1,5 +1,4 @@
-# (C) Copyright 2020 - 2021 Xilinx, Inc.
-# SPDX-License-Identifier: Apache-2.0
+# (C) Copyright 2021 - 2021 Phigent, Inc.
 
 #MIPI0
 set_property DIFF_TERM_ADV TERM_100 [get_ports {mipi_phy_if_0_clk_p}]

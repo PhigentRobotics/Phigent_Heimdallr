@@ -1,3 +1,6 @@
+# (C) Copyright 2022 - 2022 Phigent, Inc.
+
+
 proc getPresetInfo {} {
   return [dict create name {zu5_ps_1} description {zu5_ps_1}  vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 display_name {zu5_ps_1} ]
 }

@@ -1,12 +1,11 @@
-# (C) Copyright 2020 - 2021 Xilinx, Inc.
-# SPDX-License-Identifier: Apache-2.0
+# (C) Copyright 2022 - 2022 Phigent, Inc.
 
 DIR_PRJ = $(shell pwd)
 RM = rm -rf
 VIVADO_ROOT := $(XILINX_VIVADO)
 VIVADO:=${VIVADO_ROOT}/bin/vivado
 
-PLATFORM = /mnt/data-1/workspace/wudi/myprj/kv260-vitis_heimdallr/platforms/xilinx_kv260_phigent_heimdallr_202022_1/kv260_phigent_heimdallr.xpfm
+PLATFORM = ../../../platforms/xilinx_kv260_phigent_heimdallr_202022_1/kv260_phigent_heimdallr.xpfm
 
 # Kernel name
 KERNEL = pp_pipeline_accel

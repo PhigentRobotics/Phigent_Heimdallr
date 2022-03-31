@@ -38,6 +38,10 @@ This reference design contains the following:
 For additional documentation including architecture information and build
 tutorials, visit: https://www.hackster.io/PhiGent_Robotics/phigent-heimdallr-91cb92
 
+# Reference
+
+https://github.com/Xilinx/kv260-vitis
+
 # License
 
 (C) Copyright 2022 - 2022 Phigent, Ltd.

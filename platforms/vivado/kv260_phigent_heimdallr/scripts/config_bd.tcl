@@ -1,5 +1,4 @@
-# (C) Copyright 2020 - 2021 Xilinx, Inc.
-# SPDX-License-Identifier: Apache-2.0
+# (C) Copyright 2021 - 2021 Phigent, Inc.
 
 
 set ::PS_INST PS_0

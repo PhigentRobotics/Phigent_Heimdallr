@@ -1,5 +1,4 @@
 (C) Copyright 2022 - 2022 Phigent, Inc.
-SPDX-License-Identifier: Apache-2.0
 
 The Makefile in this folder creates a KV260 Vitis platform.
 
